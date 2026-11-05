@@ -8,7 +8,9 @@ set -euo pipefail
 feed=$(cd "$1" && { pwd -W 2>/dev/null || pwd; })
 version=$2
 here=$(cd "$(dirname "$0")" && pwd)
-work=$(mktemp -d)
+# Native long path on Windows too: Git Bash hands /tmp to programs as an 8.3 short path
+# (RUNNER~1), which dotnet format then fails to match to the loaded project and silently skips
+work=$(cd "$(mktemp -d)" && { pwd -W 2>/dev/null || pwd; })
 trap 'rm -rf "$work"' EXIT
 # A private package cache, so a re-packed 0.0.0-dev is never served stale
 export NUGET_PACKAGES=$work/packages
