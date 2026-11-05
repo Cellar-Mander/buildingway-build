@@ -8,9 +8,7 @@ set -euo pipefail
 feed=$(cd "$1" && { pwd -W 2>/dev/null || pwd; })
 version=$2
 here=$(cd "$(dirname "$0")" && pwd)
-# Native long path on Windows too: Git Bash hands /tmp to programs as an 8.3 short path
-# (RUNNER~1), which dotnet format then fails to match to the loaded project and silently skips
-work=$(cd "$(mktemp -d)" && { pwd -W 2>/dev/null || pwd; })
+work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 # A private package cache, so a re-packed 0.0.0-dev is never served stale
 export NUGET_PACKAGES=$work/packages
@@ -36,6 +34,11 @@ XML
   echo "$dir"
 }
 
+# fmt <dir> [subcommand]: dotnet format --verify-no-changes, run from inside the sample. Given a
+# path from Git Bash on Windows, dotnet format fails to match it to the loaded project, skips every
+# file and reports success, so it only gets the project's file name.
+fmt() { local dir=$1; shift; (cd "$dir" && dotnet format Sample.csproj "$@" --verify-no-changes); }
+
 pass() { echo "ok   $1"; }
 fail() { echo "FAIL $1"; failures=$((failures + 1)); }
 
@@ -55,13 +58,13 @@ expect() {
 
 dir=$(sample clean)
 expect ok clean-build dotnet build "$dir" --nologo
-expect ok clean-format dotnet format "$dir/Sample.csproj" --verify-no-changes
+expect ok clean-format fmt "$dir"
 if [[ -f $dir/packages.lock.json ]]; then pass lock-file; else fail lock-file; fi
 
 # Naming: a private instance field must be camelCase (IDE1006)
 dir=$(sample naming)
 sed -i 's/count/Count/g' "$dir/Counter.cs"
-expect fail:IDE1006 naming-rule dotnet format "$dir/Sample.csproj" style --verify-no-changes
+expect fail:IDE1006 naming-rule fmt "$dir" style
 
 # No brace or indent checks: those rules match dotnet format's defaults, so such a check would
 # pass without the SDK too. The naming rules above are the part a missing .globalconfig breaks.
@@ -78,7 +81,7 @@ expect ok project-overrides dotnet build "$dir" --nologo
 dir=$(sample override)
 sed -i 's/count/Count/g' "$dir/Counter.cs"
 printf 'root = true\n\n[*.cs]\ndotnet_naming_rule.instance_fields_camel.severity = none\n' > "$dir/.editorconfig"
-expect ok editorconfig-overrides dotnet format "$dir/Sample.csproj" style --verify-no-changes
+expect ok editorconfig-overrides fmt "$dir" style
 
 echo
 if (( failures )); then echo "$failures check(s) failed"; exit 1; fi
