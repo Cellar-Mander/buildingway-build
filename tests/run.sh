@@ -4,7 +4,8 @@
 # Usage: tests/run.sh <folder with the .nupkg> <version>
 set -euo pipefail
 
-feed=$(cd "$1" && pwd)
+# NuGet needs a native path; Git Bash on Windows gives /d/... unless asked for -W
+feed=$(cd "$1" && { pwd -W 2>/dev/null || pwd; })
 version=$2
 here=$(cd "$(dirname "$0")" && pwd)
 work=$(mktemp -d)
