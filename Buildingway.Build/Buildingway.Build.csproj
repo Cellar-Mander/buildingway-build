@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Packs Sdk/ as an MSBuild project SDK; there is no assembly -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <!-- NU5128: no lib/ or ref/ folder, which is right for an SDK package -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <PackageType>MSBuildSdk</PackageType>
+    <PackageId>Buildingway.Build</PackageId>
+    <!-- Release builds pass -p:Version from the tag -->
+    <Version>0.0.0-dev</Version>
+    <Authors>Cellar Mander</Authors>
+    <Description>MSBuild SDK with the shared build settings and code style for Dalamud plugin repos: warnings as errors, lock files, and a .globalconfig of formatting and naming rules.</Description>
+    <PackageProjectUrl>https://github.com/Cellar-Mander/buildingway-build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Cellar-Mander/buildingway-build</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>msbuild;sdk;dalamud;editorconfig</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="Sdk\**" Pack="true" PackagePath="Sdk\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

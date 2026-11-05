@@ -1,0 +1,17 @@
+<Project>
+  <!-- Imported near the top of each project that adds <Sdk Name="Buildingway.Build" />, after the
+       project's main SDK props and Directory.Build.props, and before restore. Set unconditionally:
+       Microsoft.NET.Sdk.props has already defaulted them, so a condition would never fire. A project
+       can still set either property itself, since its own body is evaluated after this file. -->
+  <PropertyGroup>
+    <!-- Any compiler or analyzer warning fails the build -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Reproducible restores; Dalamud.NET.Sdk already sets this for the plugin -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Code style and naming rules for dotnet format and the IDE. A local .editorconfig overrides them. -->
+    <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)Buildingway.globalconfig" />
+  </ItemGroup>
+</Project>

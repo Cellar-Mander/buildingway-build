@@ -1,0 +1,63 @@
+name: Release
+
+# Push a v<semver> tag (e.g. v0.1.0) to test, pack that version and push it to this owner's
+# GitHub Packages NuGet feed (https://nuget.pkg.github.com/Cellar-Mander/index.json), with
+# github.token: no secrets.
+on:
+  push:
+    tags: [ 'v*' ]
+
+concurrency: release
+
+permissions: {}
+
+jobs:
+
+  test:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # creates the GitHub release
+      packages: write  # pushes to GitHub Packages
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Pack
+      env:
+        TAG: ${{ github.ref_name }}
+      run: |
+        version=${TAG#v}
+        [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] ||
+          { echo "::error::$TAG isn't v<semver>"; exit 1; }
+        dotnet pack Buildingway.Build -c Release --nologo -o pack -p:Version="$version"
+
+    # The package links to this repo through the csproj's RepositoryUrl. GitHub Packages has no
+    # trusted publishing; github.token is its short-lived equivalent.
+    - name: Push to GitHub Packages
+      env:
+        GH_TOKEN: ${{ github.token }}
+        FEED: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+      run: dotnet nuget push pack/*.nupkg --api-key "$GH_TOKEN" --source "$FEED" # zizmor: ignore[use-trusted-publishing]
+
+    - name: GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ github.ref_name }}
+      run: |
+        prerelease=()
+        [[ $TAG == *-* ]] && prerelease=(--prerelease)
+        gh release create "$TAG" pack/*.nupkg --repo "$GITHUB_REPOSITORY" --generate-notes "${prerelease[@]}"
