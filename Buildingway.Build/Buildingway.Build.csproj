@@ -15,7 +15,7 @@
     <!-- Release builds pass -p:Version from the tag -->
     <Version>0.0.0-dev</Version>
     <Authors>Cellar Mander</Authors>
-    <Description>MSBuild SDK with the shared build settings and code style for Dalamud plugin repos: warnings as errors, lock files, and a .globalconfig of formatting and naming rules.</Description>
+    <Description>MSBuild SDK with the shared build settings and code style for Dalamud plugin repos: warnings as errors, lock files, a .globalconfig of formatting and naming rules, and analyzers for banned APIs, blocking task waits and undisposed objects.</Description>
     <PackageProjectUrl>https://github.com/Cellar-Mander/buildingway-build</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Cellar-Mander/buildingway-build</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
