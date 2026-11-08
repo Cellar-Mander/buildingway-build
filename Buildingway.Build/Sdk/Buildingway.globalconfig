@@ -49,3 +49,16 @@ dotnet_naming_rule.instance_fields_camel.severity = warning
 dotnet_naming_rule.events_on_pascal.symbols = events
 dotnet_naming_rule.events_on_pascal.style = on_pascal
 dotnet_naming_rule.events_on_pascal.severity = warning
+
+# Analyzer rules that Sdk.props adds but that are off here: checked against say-my-name and jaunt,
+# they flagged only correct code or style
+# Async suffix: naming style, not a Dalamud concern
+dotnet_diagnostic.VSTHRD200.severity = none
+# Awaiting a task started elsewhere: a deadlock risk only under Visual Studio's JoinableTaskFactory
+dotnet_diagnostic.VSTHRD003.severity = none
+# Created disposable passed to a constructor that takes ownership of it, and disposing that owned
+# object: the analyzer can't see ownership move, so these fire on correct code
+dotnet_diagnostic.IDISP004.severity = none
+dotnet_diagnostic.IDISP007.severity = none
+# Unsealed class with a non-virtual Dispose: style
+dotnet_diagnostic.IDISP025.severity = none

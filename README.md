@@ -8,9 +8,15 @@ Dalamud plugin repo shares, so a repo needs no `Directory.Build.props` or `.edit
 | `TreatWarningsAsErrors` | `true`: any compiler or analyzer warning fails the build |
 | `RestorePackagesWithLockFile` | `true`: restores are reproducible (`packages.lock.json`) |
 | Code style | [`Buildingway.globalconfig`](Buildingway.Build/Sdk/Buildingway.globalconfig): 4-space indent, LF, Allman braces, `var`, and naming rules (private fields camelCase; private statics, consts and events PascalCase, events prefixed `On`) that `dotnet format` enforces |
+| Analyzers | Build-time only, so nothing ships with the plugin. [BannedApiAnalyzers](https://github.com/dotnet/roslyn-analyzers/blob/main/src/Microsoft.CodeAnalysis.BannedApiAnalyzers/BannedApiAnalyzers.Help.md) bans what [`BannedSymbols.txt`](Buildingway.Build/Sdk/BannedSymbols.txt) lists: `Regex` and `[GeneratedRegex]`, since backtracking can take exponential time on untrusted text, and `Thread.Sleep`, which freezes the game on its threads. Test projects are exempt. [VS Threading analyzers](https://microsoft.github.io/vs-threading/analyzers/) catch blocking waits on tasks, `async void` and unobserved tasks. [IDisposableAnalyzers](https://github.com/DotNetAnalyzers/IDisposableAnalyzers) catch disposables, such as windows and hooks, that are never disposed. The `.globalconfig` turns off the rules from these that fired only on correct code |
 
 A project can still set either property in its own csproj (a `Directory.Build.props` can't, as it
-is read before the SDK), and a local `.editorconfig` overrides any code style rule.
+is read before the SDK), and a local `.editorconfig` overrides any code style or analyzer rule.
+
+A non-backtracking regex is allowed where the ban is suppressed with the reason, e.g.
+`#pragma warning disable RS0030 // NonBacktracking: linear in the input` before
+`new Regex(pattern, RegexOptions.NonBacktracking)`. Do the same for a deliberate blocking wait
+(VSTHRD002), such as flushing a file during `Dispose`.
 
 ## Using it in a plugin repo
 

@@ -1,0 +1,4 @@
+T:System.Text.RegularExpressions.Regex;Backtracking regex can take exponential time on untrusted text. Use RegexOptions.NonBacktracking (or no regex), then suppress RS0030 at that line with the reason.
+T:System.Text.RegularExpressions.GeneratedRegexAttribute;Source-generated regex always backtracks. Use new Regex(pattern, RegexOptions.NonBacktracking) and suppress RS0030 with the reason.
+M:System.Threading.Thread.Sleep(System.Int32);Blocks the calling thread, which freezes the game on the framework or draw thread. Use await Task.Delay, or IFramework.RunOnTick for a delayed game-thread action.
+M:System.Threading.Thread.Sleep(System.TimeSpan);Blocks the calling thread, which freezes the game on the framework or draw thread. Use await Task.Delay, or IFramework.RunOnTick for a delayed game-thread action.

@@ -14,4 +14,19 @@
     <!-- Code style and naming rules for dotnet format and the IDE. A local .editorconfig overrides them. -->
     <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)Buildingway.globalconfig" />
   </ItemGroup>
+
+  <!-- Analyzers that turn written Dalamud guidance into build errors. Build-time only: nothing ships
+       with the plugin. A local .editorconfig can change any rule's severity. -->
+  <ItemGroup>
+    <!-- RS0030: APIs listed in BannedSymbols.txt (backtracking regex, Thread.Sleep), except in test
+         projects, which never run in the game and read only their own fixtures. A project can ban
+         more in its own BannedSymbols.txt. The package itself is in every project, so restore and
+         lock files don't depend on IsTestProject, which restore itself sets. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" Condition="'$(IsTestProject)' != 'true'" />
+    <!-- VSTHRD: blocking waits on tasks, async void and unobserved tasks, which freeze or crash the game -->
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <!-- IDISP: disposables that are created but never disposed, such as windows, hooks and timers -->
+    <PackageReference Include="IDisposableAnalyzers" Version="4.0.8" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+  </ItemGroup>
 </Project>
