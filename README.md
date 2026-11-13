@@ -24,9 +24,9 @@ lets the official Dalamud plugin repo's (D17) build skip the SDK and still build
 
 ## Using it in a plugin repo
 
-1. Import the SDK first and last in each Dalamud plugin project's body, skipped when
-   `IsPlogonBuild` is `True`. Plogon, which runs D17's builds offline and so can't fetch this SDK
-   from GitHub Packages, sets it:
+1. Import the SDK first and last in the body of the Dalamud plugin project and of every project
+   it references, directly or not, skipped when `IsPlogonBuild` is `True`. Plogon, which runs
+   D17's builds offline and so can't fetch this SDK from GitHub Packages, sets it:
 
    ```xml
    <Project Sdk="Dalamud.NET.Sdk/15.0.0">
@@ -36,8 +36,8 @@ lets the official Dalamud plugin repo's (D17) build skip the SDK and still build
    </Project>
    ```
 
-   Other projects in the repo, such as tests, can use either that or `<Sdk Name="Buildingway.Build" />`
-   after their main SDK. buildingway-ci's
+   Only projects outside the plugin's references, such as tests, can use
+   `<Sdk Name="Buildingway.Build" />` after their main SDK instead. buildingway-ci's
    [`plogon-build.yml`](https://github.com/Cellar-Mander/buildingway-ci/blob/main/.github/workflows/plogon-build.yml)
    checks in CI that D17 can build the plugin.
 
