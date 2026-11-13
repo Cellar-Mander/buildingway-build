@@ -18,14 +18,28 @@ A non-backtracking regex is allowed where the ban is suppressed with the reason,
 `new Regex(pattern, RegexOptions.NonBacktracking)`. Do the same for a deliberate blocking wait
 (VSTHRD002), such as flushing a file during `Dispose`.
 
+The SDK only adds checks: warnings as errors, analyzers, banned APIs, code style and the lock-file
+setting. Anything that changes the build output belongs in the project, not here. That is what
+lets the official Dalamud plugin repo's (D17) build skip the SDK and still build the same plugin.
+
 ## Using it in a plugin repo
 
-1. Add the SDK to every project, after its main SDK:
+1. Import the SDK first and last in the body of the Dalamud plugin project and of every project
+   it references, directly or not, skipped when `IsPlogonBuild` is `True`. Plogon, which runs
+   D17's builds offline and so can't fetch this SDK from GitHub Packages, sets it:
 
    ```xml
    <Project Sdk="Dalamud.NET.Sdk/15.0.0">
-     <Sdk Name="Buildingway.Build" />
+     <Import Project="Sdk.props" Sdk="Buildingway.Build" Condition="'$(IsPlogonBuild)' != 'True'" />
+     ...
+     <Import Project="Sdk.targets" Sdk="Buildingway.Build" Condition="'$(IsPlogonBuild)' != 'True'" />
+   </Project>
    ```
+
+   Only projects outside the plugin's references, such as tests, can use
+   `<Sdk Name="Buildingway.Build" />` after their main SDK instead. buildingway-ci's
+   [`plogon-build.yml`](https://github.com/Cellar-Mander/buildingway-ci/blob/main/.github/workflows/plogon-build.yml)
+   checks in CI that D17 can build the plugin.
 
 2. Pin its version in `global.json` at the repo root. Dependabot's `nuget` updater bumps
    `msbuild-sdks` entries like other packages:
