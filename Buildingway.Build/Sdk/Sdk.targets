@@ -1,3 +1,15 @@
 <Project>
-  <!-- Required by MSBuild for every SDK; nothing shared runs late in the build yet -->
+  <!-- Imported near the end of each project that adds <Sdk Name="Buildingway.Build" />, after the
+       project's own body, so properties the project sets are already known here. -->
+
+  <!-- Caps a test project's GC heap, so a test that allocates without bound fails with
+       OutOfMemoryException instead of exhausting the machine's memory. TestHostHeapHardLimit is
+       the cap in bytes; 0 removes it. -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+    <TestHostHeapHardLimit Condition="'$(TestHostHeapHardLimit)' == ''">1073741824</TestHostHeapHardLimit>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsTestProject)' == 'true' and '$(TestHostHeapHardLimit)' != '0'">
+    <RuntimeHostConfigurationOption Include="System.GC.HeapHardLimit" Value="$(TestHostHeapHardLimit)" />
+  </ItemGroup>
 </Project>
