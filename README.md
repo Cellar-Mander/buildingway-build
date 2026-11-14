@@ -9,8 +9,9 @@ Dalamud plugin repo shares, so a repo needs no `Directory.Build.props` or `.edit
 | `RestorePackagesWithLockFile` | `true`: restores are reproducible (`packages.lock.json`) |
 | Code style | [`Buildingway.globalconfig`](Buildingway.Build/Sdk/Buildingway.globalconfig): 4-space indent, LF, Allman braces, `var`, and naming rules (private fields camelCase; private statics, consts and events PascalCase, events prefixed `On`) that `dotnet format` enforces |
 | Analyzers | Build-time only, so nothing ships with the plugin. [BannedApiAnalyzers](https://github.com/dotnet/roslyn-analyzers/blob/main/src/Microsoft.CodeAnalysis.BannedApiAnalyzers/BannedApiAnalyzers.Help.md) bans what [`BannedSymbols.txt`](Buildingway.Build/Sdk/BannedSymbols.txt) lists: `Regex` and `[GeneratedRegex]`, since backtracking can take exponential time on untrusted text, and `Thread.Sleep`, which freezes the game on its threads. Test projects are exempt. [VS Threading analyzers](https://microsoft.github.io/vs-threading/analyzers/) catch blocking waits on tasks, `async void` and unobserved tasks. [IDisposableAnalyzers](https://github.com/DotNetAnalyzers/IDisposableAnalyzers) catch disposables, such as windows and hooks, that are never disposed. The `.globalconfig` turns off the rules from these that fired only on correct code |
+| Test host heap | Test projects only: the GC heap is capped at 1 GiB, so a Stryker mutant that loops forever while allocating fails fast with `OutOfMemoryException` instead of taking the machine's memory. Set `TestHostHeapHardLimit` to a byte count to raise it, or `0` to remove it |
 
-A project can still set either property in its own csproj (a `Directory.Build.props` can't, as it
+A project can still set any of these properties in its own csproj (a `Directory.Build.props` can't, as it
 is read before the SDK), and a local `.editorconfig` overrides any code style or analyzer rule.
 
 A non-backtracking regex is allowed where the ban is suppressed with the reason, e.g.
@@ -19,7 +20,8 @@ A non-backtracking regex is allowed where the ban is suppressed with the reason,
 (VSTHRD002), such as flushing a file during `Dispose`.
 
 The SDK only adds checks: warnings as errors, analyzers, banned APIs, code style and the lock-file
-setting. Anything that changes the build output belongs in the project, not here. That is what
+setting. The test host heap cap is the one change to build output, and only test projects get it,
+which never ship. Anything else that changes the build output belongs in the project, not here. That is what
 lets the official Dalamud plugin repo's (D17) build skip the SDK and still build the same plugin.
 
 ## Using it in a plugin repo

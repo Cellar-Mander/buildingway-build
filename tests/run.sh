@@ -129,6 +129,36 @@ dir=$(sample tuned-off)
 member "$dir" '    public static async System.Threading.Tasks.Task Yield() => await System.Threading.Tasks.Task.Yield();'
 expect ok tuned-rules-off dotnet build "$dir" --nologo
 
+# heap <dir> [property...]: builds the sample with a runtimeconfig.json, as a test project's
+# Microsoft.NET.Test.Sdk asks for, and prints the GC heap cap it was given ("none" if unset)
+heap() {
+  local dir=$1; shift
+  dotnet build "$dir" --nologo -p:GenerateRuntimeConfigurationFiles=true "$@" > "$work/heap.log" 2>&1 || { cat "$work/heap.log"; return 1; }
+  local cap
+  # Values over 2^31 are written as JSON strings, which the runtime reads the same way
+  cap=$(grep -oE '"System.GC.HeapHardLimit": "?[0-9]+' "$dir"/bin/Debug/*/Sample.runtimeconfig.json | grep -oE '[0-9]+$') || cap=none
+  echo "$cap"
+}
+# check_heap <name> <want> <dir> [property...]
+check_heap() {
+  local name=$1 want=$2; shift 2
+  local got
+  got=$(heap "$@") || { fail "$name (build failed)"; return; }
+  if [[ $got == "$want" ]]; then pass "$name"; else fail "$name (wanted $want, got $got)"; fi
+}
+
+# A test project's GC heap is capped, so a runaway mutant can't take the machine's memory...
+dir=$(sample heap-test)
+check_heap test-heap-capped 1073741824 "$dir" -p:IsTestProject=true
+# ...a project can raise or remove the cap...
+dir=$(sample heap-raised)
+check_heap test-heap-raised 2147483648 "$dir" -p:IsTestProject=true -p:TestHostHeapHardLimit=2147483648
+dir=$(sample heap-off)
+check_heap test-heap-off none "$dir" -p:IsTestProject=true -p:TestHostHeapHardLimit=0
+# ...and other projects are left alone
+dir=$(sample heap-library)
+check_heap library-heap-uncapped none "$dir"
+
 echo
 if (( failures )); then echo "$failures check(s) failed"; exit 1; fi
 echo "All checks passed"
