@@ -62,3 +62,12 @@ dotnet_diagnostic.IDISP004.severity = none
 dotnet_diagnostic.IDISP007.severity = none
 # Unsealed class with a non-virtual Dispose: style
 dotnet_diagnostic.IDISP025.severity = none
+
+# Performance rules (CA18xx) that Sdk.props turns on but that stay suggestions here: checked against
+# say-my-name, jaunt and the template, they flag code where the speed gain is negligible
+# Members that could be static: a call saves only passing `this`
+dotnet_diagnostic.CA1822.severity = suggestion
+# Fields or properties set to their default value, such as Dalamud's `Version = 0`: one store per object
+dotnet_diagnostic.CA1805.severity = suggestion
+# Multidimensional arrays: jagged arrays are not reliably faster, and the rectangular shape is clearer
+dotnet_diagnostic.CA1814.severity = suggestion

@@ -107,6 +107,7 @@ expect fail:'error RS0030' banned-generated-regex dotnet build "$dir" --nologo
 dir=$(sample non-backtracking)
 member "$dir" '#pragma warning disable RS0030 // NonBacktracking: linear in the input' \
   '    private static readonly System.Text.RegularExpressions.Regex Pattern = new("a+", System.Text.RegularExpressions.RegexOptions.NonBacktracking);' \
+  '    public static bool Match(string s) => Pattern.IsMatch(s);' \
   '#pragma warning restore RS0030'
 expect ok non-backtracking-allowed dotnet build "$dir" --nologo
 
@@ -128,6 +129,20 @@ expect fail:'error IDISP006' undisposed-field dotnet build "$dir" --nologo
 dir=$(sample tuned-off)
 member "$dir" '    public static async System.Threading.Tasks.Task Yield() => await System.Threading.Tasks.Task.Yield();'
 expect ok tuned-rules-off dotnet build "$dir" --nologo
+
+# Performance rules: enumerating an IEnumerable twice (CA1851, off by default in .NET)...
+dir=$(sample multiple-enumeration)
+member "$dir" '    public static int Spread(System.Collections.Generic.IEnumerable<int> xs) => System.Linq.Enumerable.Max(xs) - System.Linq.Enumerable.Min(xs);'
+expect fail:'error CA1851' multiple-enumeration dotnet build "$dir" --nologo
+# ...and ContainsKey followed by the indexer (CA1854)
+dir=$(sample double-lookup)
+member "$dir" '    public static int Get(System.Collections.Generic.Dictionary<string, int> d, string k) => d.ContainsKey(k) ? d[k] : 0;'
+expect fail:'error CA1854' double-lookup dotnet build "$dir" --nologo
+# Performance rules the .globalconfig leaves as suggestions: a member that could be static (CA1822)
+# and a field set to its default value (CA1805)
+dir=$(sample perf-suggestions)
+member "$dir" '    private int zero = 0;' '    public int Zero => zero;' '    private int Double(int x) => 2 * x;' '    public int Twice(int x) => Double(x);'
+expect ok perf-suggestions-only dotnet build "$dir" --nologo
 
 # heap <dir> [property...]: builds the sample with a runtimeconfig.json, as a test project's
 # Microsoft.NET.Test.Sdk asks for, and prints the GC heap cap it was given ("none" if unset)
