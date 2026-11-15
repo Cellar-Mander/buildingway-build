@@ -6,6 +6,10 @@
   <PropertyGroup>
     <!-- Any compiler or analyzer warning fails the build -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Every .NET performance rule (CA18xx) is a warning, including those off by default such as
+         CA1851 (enumerating an IEnumerable more than once). Buildingway.globalconfig turns the noisy
+         ones back down to suggestions. -->
+    <AnalysisModePerformance>All</AnalysisModePerformance>
     <!-- Reproducible restores; Dalamud.NET.Sdk already sets this for the plugin -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
